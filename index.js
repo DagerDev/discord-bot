@@ -81,7 +81,7 @@ client.on("messageCreate", async (message) => {
   if (!command) {
 
     return message.reply(
-      "❌ Invalid command."
+      "command does not exist or no perms"
     );
 
   }
