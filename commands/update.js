@@ -10,16 +10,16 @@ module.exports = {
 
       await axios.post(
 
-        `https://api.github.com/repos/${process.env.GITHUB_USERNAME}/${process.env.GITHUB_REPO}/actions/workflows/${process.env.WORKFLOW_FILE}/dispatches`,
+        `https://api.github.com/repos/${process.env.GITHUB_USERNAME}/${process.env.GITHUB_REPO}/dispatches`,
 
         {
-          ref: "main"
+          event_type: "discord-update"
         },
 
         {
           headers: {
             Authorization:
-              `Bearer ${process.env.GITHUB_TOKEN}`,
+              `token ${process.env.GITHUB_TOKEN}`,
 
             Accept:
               "application/vnd.github+json"
@@ -29,7 +29,7 @@ module.exports = {
       );
 
       message.reply(
-        "🚀 Deployment started."
+        "🚀 Update triggered."
       );
 
     } catch (error) {
@@ -37,7 +37,7 @@ module.exports = {
       console.error(error);
 
       message.reply(
-        "❌ Deployment failed."
+        "❌ Update failed."
       );
 
     }
