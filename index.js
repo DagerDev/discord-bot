@@ -13,52 +13,55 @@ const client = new Client({
   ]
 });
 
-client.commands = new Collection();
-
-// load commands
-const commandFiles = fs
-  .readdirSync("./commands")
-  .filter(file => file.endsWith(".js"));
-
-for (const file of commandFiles) {
-  const command = require(`./commands/${file}`);
-  client.commands.set(command.name, command);
-}
-
-// ready
-client.on("ready", () => {
-  console.log(`Logged in as ${client.user.tag}`);
-});
-
-// message handler
 client.on("messageCreate", async (message) => {
+
   if (message.author.bot) return;
 
-  const prefixes = ["¿", "!"];
+  const prefixes = ["!", "¿"];
 
   const usedPrefix = prefixes.find(p =>
-  message.content.startsWith(p)
-);
+    message.content.startsWith(p)
+  );
 
-if (!usedPrefix) return;
+  if (!usedPrefix) return;
 
-const args = message.content
-  .slice(usedPrefix.length)
-  .trim()
-  .split(/ +/);
+  const args = message.content
+    .slice(usedPrefix.length)
+    .trim()
+    .split(/ +/);
 
   const commandName = args.shift().toLowerCase();
 
   const command = client.commands.get(commandName);
 
-  if (!command) return;
+  // Invalid command
+  if (!command) {
+    return message.reply(
+      "❌ Invalid command."
+    );
+  }
+
+  // Permission check
+  const allowedUsers =
+    process.env.ALLOWED_USERS.split(",");
+
+  if (!allowedUsers.includes(message.author.id)) {
+    return message.reply(
+      "❌ No permission to use this command."
+    );
+  }
 
   try {
-    command.execute(message, args);
-  } catch (error) {
-    console.error(error);
-    message.channel.send("Command error.");
-  }
-});
+    await command.execute(message, args);
 
-client.login(process.env.TOKEN);
+  } catch (error) {
+
+    console.error(error);
+
+    message.reply(
+      "❌ Command execution failed."
+    );
+
+  }
+
+});
