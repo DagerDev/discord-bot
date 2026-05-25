@@ -16,6 +16,6 @@ module.exports = {
 
     waitingConfirm = true;
 
-    message.channel.send("Confirm export? type ¿yes");
+    message.channel.send("Confirm export? type !y / !n");
   }
 };
