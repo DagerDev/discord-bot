@@ -3,7 +3,11 @@ require("dotenv").config();
 const fs = require("fs");
 const path = require("path");
 
-const { Client, GatewayIntentBits, Collection } = require("discord.js");
+const {
+  Client,
+  GatewayIntentBits,
+  Collection
+} = require("discord.js");
 
 const client = new Client({
   intents: [
@@ -13,6 +17,43 @@ const client = new Client({
   ]
 });
 
+client.commands = new Collection();
+
+
+// Load commands
+const commandsPath =
+  path.join(__dirname, "commands");
+
+const commandFiles =
+  fs.readdirSync(commandsPath)
+    .filter(file => file.endsWith(".js"));
+
+for (const file of commandFiles) {
+
+  const filePath =
+    path.join(commandsPath, file);
+
+  const command = require(filePath);
+
+  client.commands.set(
+    command.name,
+    command
+  );
+
+}
+
+
+// Bot ready
+client.once("ready", () => {
+
+  console.log(
+    `Logged in as ${client.user.tag}`
+  );
+
+});
+
+
+// Message handler
 client.on("messageCreate", async (message) => {
 
   if (message.author.bot) return;
@@ -30,29 +71,44 @@ client.on("messageCreate", async (message) => {
     .trim()
     .split(/ +/);
 
-  const commandName = args.shift().toLowerCase();
+  const commandName =
+    args.shift().toLowerCase();
 
-  const command = client.commands.get(commandName);
+  const command =
+    client.commands.get(commandName);
 
   // Invalid command
   if (!command) {
+
     return message.reply(
       "❌ Invalid command."
     );
+
   }
 
   // Permission check
   const allowedUsers =
-    process.env.ALLOWED_USERS.split(",");
+    process.env.ALLOWED_USERS
+      .split(",");
 
-  if (!allowedUsers.includes(message.author.id)) {
+  if (
+    !allowedUsers.includes(
+      message.author.id
+    )
+  ) {
+
     return message.reply(
       "❌ No permission to use this command."
     );
+
   }
 
   try {
-    await command.execute(message, args);
+
+    await command.execute(
+      message,
+      args
+    );
 
   } catch (error) {
 
@@ -65,3 +121,7 @@ client.on("messageCreate", async (message) => {
   }
 
 });
+
+
+// Login
+client.login(process.env.TOKEN);

@@ -3,7 +3,9 @@ const {
 } = require("@google/generative-ai");
 
 const genAI =
-  new GoogleGenerativeAI(process.env.GEMINI_KEY);
+  new GoogleGenerativeAI(
+    process.env.GEMINI_KEY
+  );
 
 module.exports = {
 
@@ -14,9 +16,11 @@ module.exports = {
     const prompt = args.join(" ");
 
     if (!prompt) {
+
       return message.reply(
         "Usage: !ai <prompt>"
       );
+
     }
 
     try {
@@ -32,16 +36,27 @@ module.exports = {
         );
 
       const response =
-        result.response.text();
+        await result.response;
 
-      message.reply(response);
+      const text =
+        response.text();
+
+      if (!text) {
+
+        return message.reply(
+          "No AI response."
+        );
+
+      }
+
+      message.reply(text);
 
     } catch (error) {
 
       console.error(error);
 
       message.reply(
-        "AI failed."
+        "AI request failed."
       );
 
     }
