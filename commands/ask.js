@@ -2,6 +2,13 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_KEY);
 
+// fallback model list (important fix)
+const MODELS = [
+  "gemini-pro",
+  "gemini-1.0-pro",
+  "gemini-1.5-pro"
+];
+
 module.exports = {
   name: "ask",
 
@@ -16,41 +23,40 @@ module.exports = {
       return message.reply("❌ Missing GEMINI_KEY");
     }
 
-    try {
-      const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash"
-      });
+    let lastError;
 
-      const result = await model.generateContent(prompt);
-      const text = result.response.text();
+    for (const modelName of MODELS) {
+      try {
+        const model = genAI.getGenerativeModel({
+          model: modelName
+        });
 
-      if (!text) {
-        return message.reply("❌ No response from AI");
+        const result = await model.generateContent(prompt);
+        const text = result.response.text();
+
+        if (text) {
+          return message.reply(text.substring(0, 1900));
+        }
+
+      } catch (error) {
+        lastError = error;
+        console.log(`Model failed: ${modelName}`, error.message);
       }
+    }
 
-      return message.reply(text.substring(0, 1900));
-
-    } catch (error) {
-      // FULL DEBUG LOG (terminal)
-      console.error("FULL AI ERROR:", error);
-
-      // SAFE full error for Discord (trimmed)
-      const fullError = JSON.stringify(
+    // if all models fail → show full error
+    return message.reply(
+      "❌ AI FAILED (ALL MODELS)\n```json\n" +
+      JSON.stringify(
         {
-          name: error?.name,
-          message: error?.message,
-          status: error?.status,
-          stack: error?.stack
+          message: lastError?.message,
+          status: lastError?.status,
+          name: lastError?.name
         },
         null,
         2
-      );
-
-      return message.reply(
-        "❌ AI ERROR (FULL DEBUG)\n```json\n" +
-        fullError.slice(0, 1800) +
-        "\n```"
-      );
-    }
+      ).slice(0, 1800) +
+      "\n```"
+    );
   }
 };
