@@ -22,37 +22,28 @@ client.views = new Map();
 
 const commandsPath = path.join(__dirname, "commands");
 
-function loadCommands(dir) {
-  const entries = fs.readdirSync(dir);
+const commandFiles = fs.readdirSync(commandsPath)
+  .filter(file => file.endsWith(".js"));
 
-  for (const entry of entries) {
-    const fullPath = path.join(dir, entry);
-    const stat = fs.lstatSync(fullPath);
+for (const file of commandFiles) {
 
-    if (stat.isDirectory()) {
-      loadCommands(fullPath);
-      continue;
-    }
+  const filePath = path.join(commandsPath, file);
 
-    if (!entry.endsWith(".js")) continue;
+  delete require.cache[require.resolve(filePath)];
 
-    delete require.cache[require.resolve(fullPath)];
+  const command = require(filePath);
 
-    const command = require(fullPath);
-
-    if (command?.name && typeof command.execute === "function") {
-      client.commands.set(command.name, command);
-    }
+  if (command?.name && typeof command.execute === "function") {
+    client.commands.set(command.name, command);
   }
 }
-
-loadCommands(commandsPath);
 
 client.once("ready", () => {
   console.log(`Logged in as ${client.user.tag}`);
 });
 
 client.on("messageCreate", async (message) => {
+
   if (message.author.bot) return;
 
   const prefixes = ["!", "¿"];
@@ -88,6 +79,7 @@ client.on("messageCreate", async (message) => {
     console.error(error);
     message.reply("Command execution failed.");
   }
+
 });
 
 client.login(process.env.TOKEN);
