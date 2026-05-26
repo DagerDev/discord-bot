@@ -20,10 +20,6 @@ const client = new Client({
 client.commands = new Collection();
 client.views = new Map();
 
-
-// -----------------------------
-// Load commands
-// -----------------------------
 const commandsPath =
   path.join(__dirname, "commands");
 
@@ -36,7 +32,23 @@ for (const file of commandFiles) {
   const filePath =
     path.join(commandsPath, file);
 
-  const command = require(filePath);
+  delete require.cache[
+    require.resolve(filePath)
+  ];
+
+  const command =
+    require(filePath);
+
+  if (
+    !command.name ||
+    typeof command.execute !== "function"
+  ) {
+    console.log(
+      `Invalid command file: ${file}`
+    );
+
+    continue;
+  }
 
   client.commands.set(
     command.name,
@@ -45,10 +57,6 @@ for (const file of commandFiles) {
 
 }
 
-
-// -----------------------------
-// Bot ready
-// -----------------------------
 client.once("ready", () => {
 
   console.log(
@@ -57,10 +65,6 @@ client.once("ready", () => {
 
 });
 
-
-// -----------------------------
-// Message handler
-// -----------------------------
 client.on("messageCreate", async (message) => {
 
   if (message.author.bot) return;
@@ -84,7 +88,6 @@ client.on("messageCreate", async (message) => {
   const command =
     client.commands.get(commandName);
 
-  // Invalid command
   if (!command) {
 
     return message.reply(
@@ -93,7 +96,6 @@ client.on("messageCreate", async (message) => {
 
   }
 
-  // Permission check
   const allowedUsers =
     process.env.ALLOWED_USERS
       .split(",");
@@ -129,8 +131,4 @@ client.on("messageCreate", async (message) => {
 
 });
 
-
-// -----------------------------
-// Login
-// -----------------------------
 client.login(process.env.TOKEN);

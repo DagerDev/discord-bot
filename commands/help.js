@@ -6,80 +6,134 @@ module.exports = {
   description: "Shows available commands",
 
   async execute(message, args) {
-    const category = (args[0] || "").toLowerCase();
 
-    const basePath = path.join(__dirname);
+    const category =
+      (args[0] || "").toLowerCase();
+
+    const basePath = __dirname;
 
     // -----------------------------
-    // !help (no args) → categories
+    // !help
     // -----------------------------
     if (!category) {
+
       return message.channel.send(
-        "Available categories:\n- basic\n- git\n\nUsage: !help <category>"
+        "Available categories:\n- basic\n- git"
       );
+
     }
 
     // -----------------------------
-    // BASIC COMMANDS
+    // BASIC
     // -----------------------------
     if (category === "basic") {
-      const files = fs.readdirSync(basePath)
-        .filter(f =>
-          f.endsWith(".js") &&
-          f !== "git.js" &&
-          f !== "help.js"
-        );
 
-      let output = "BASIC COMMANDS\n\n";
+      const files =
+        fs.readdirSync(basePath)
+          .filter(file =>
+            file.endsWith(".js") &&
+            file !== "git.js" &&
+            file !== "help.js"
+          );
+
+      let output =
+        "BASIC COMMANDS\n\n";
 
       for (const file of files) {
-        const cmd = require(path.join(basePath, file));
 
-        output += `!${cmd.name}`;
+        try {
 
-        if (cmd.description) {
-          output += ` - ${cmd.description}`;
+          const cmd =
+            require(path.join(basePath, file));
+
+          output += `!${cmd.name}`;
+
+          if (cmd.description) {
+            output += ` - ${cmd.description}`;
+          }
+
+          output += "\n";
+
+        } catch (err) {
+
+          console.error(
+            `Failed loading ${file}`,
+            err
+          );
+
         }
 
-        output += "\n";
       }
 
-      return message.channel.send("```\n" + output + "\n```");
+      return message.channel.send(
+        "```\n" + output + "\n```"
+      );
+
     }
 
     // -----------------------------
-    // GIT COMMANDS (folder-based)
+    // GIT
     // -----------------------------
     if (category === "git") {
-      const gitPath = path.join(basePath, "git");
+
+      const gitPath =
+        path.join(basePath, "git");
 
       if (!fs.existsSync(gitPath)) {
-        return message.channel.send("No git commands folder found.");
+
+        return message.channel.send(
+          "Git folder not found."
+        );
+
       }
 
-      const files = fs.readdirSync(gitPath)
-        .filter(f => f.endsWith(".js"));
+      const files =
+        fs.readdirSync(gitPath)
+          .filter(file =>
+            file.endsWith(".js")
+          );
 
-      let output = "GIT COMMANDS\n\n";
+      let output =
+        "GIT COMMANDS\n\n";
 
       for (const file of files) {
-        const cmd = require(path.join(gitPath, file));
 
-        output += `!git ${cmd.name}`;
+        try {
 
-        if (cmd.description) {
-          output += ` - ${cmd.description}`;
+          const cmd =
+            require(path.join(gitPath, file));
+
+          output += `!git ${cmd.name}`;
+
+          if (cmd.description) {
+            output += ` - ${cmd.description}`;
+          }
+
+          output += "\n";
+
+        } catch (err) {
+
+          console.error(
+            `Failed loading git/${file}`,
+            err
+          );
+
         }
 
-        output += "\n";
       }
 
-      return message.channel.send("```\n" + output + "\n```");
+      return message.channel.send(
+        "```\n" + output + "\n```"
+      );
+
     }
 
     // -----------------------------
-    // INVALID CATEGORY
+    // INVALID
     // -----------------------------
-    return message.channel.send("Unknown category. Use: basic | git");
+    return message.channel.send(
+      "Unknown category."
+    );
+
   }
 };
