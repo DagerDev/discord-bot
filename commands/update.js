@@ -10,7 +10,7 @@ module.exports = {
 
       await axios.post(
 
-        `https://api.github.com/repos/${process.env.GITHUB_USERNAME}/${process.env.GITHUB_REPO}/dispatches`,
+        `https://api.github.com/repos/${process.env.GITHUB_USERNAME}/discord-bot/dispatches`,
 
         {
           event_type: "discord-update"
