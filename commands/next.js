@@ -1,3 +1,47 @@
+function renderPage(view) {
+
+  const linesPerPage = 25;
+
+  const start =
+    view.page * linesPerPage;
+
+  const end =
+    start + linesPerPage;
+
+  const lines =
+    view.rawLines.slice(start, end);
+
+  const output = [];
+
+  for (
+    let i = 0;
+    i < lines.length;
+    i++
+  ) {
+
+    const actualLine =
+      start + i + 1;
+
+    let line = lines[i];
+
+    if (
+      view.highlight &&
+      actualLine === view.highlight
+    ) {
+
+      line =
+        `>>> ${line}`;
+
+    }
+
+    output.push(line);
+
+  }
+
+  return output.join("\n");
+
+}
+
 module.exports = {
   name: "next",
 
@@ -9,26 +53,38 @@ module.exports = {
       );
 
     if (!view) {
+
       return message.channel.send(
         "No active viewer session."
       );
+
     }
 
+    const linesPerPage = 25;
+
+    const maxPages =
+      Math.ceil(
+        view.rawLines.length /
+        linesPerPage
+      );
+
     if (
-      view.page >=
-      view.pages.length - 1
+      view.page >= maxPages - 1
     ) {
+
       return message.channel.send(
         "Already at bottom."
       );
+
     }
 
     view.page++;
 
     return message.channel.send(
       "```txt\n" +
-      view.pages[view.page] +
+      renderPage(view) +
       "\n```"
     );
+
   }
 };

@@ -20,49 +20,44 @@ const client = new Client({
 client.commands = new Collection();
 client.views = new Map();
 
-const commandsPath =
-  path.join(__dirname, "commands");
+const commandsPath = path.join(__dirname, "commands");
 
-const commandFiles =
-  fs.readdirSync(commandsPath)
-    .filter(file => file.endsWith(".js"));
+function loadCommands(dir) {
 
-for (const file of commandFiles) {
+  const entries = fs.readdirSync(dir);
 
-  const filePath =
-    path.join(commandsPath, file);
+  for (const entry of entries) {
 
-  delete require.cache[
-    require.resolve(filePath)
-  ];
+    const fullPath = path.join(dir, entry);
 
-  const command =
-    require(filePath);
+    const stat = fs.lstatSync(fullPath);
 
-  if (
-    !command.name ||
-    typeof command.execute !== "function"
-  ) {
-    console.log(
-      `Invalid command file: ${file}`
-    );
+    if (stat.isDirectory()) {
 
-    continue;
+      loadCommands(fullPath);
+
+    } else if (entry.endsWith(".js")) {
+
+      delete require.cache[require.resolve(fullPath)];
+
+      const command = require(fullPath);
+
+      if (
+        command?.name &&
+        typeof command.execute === "function"
+      ) {
+        client.commands.set(command.name, command);
+      } else {
+        console.log(`Invalid command file: ${entry}`);
+      }
+    }
   }
-
-  client.commands.set(
-    command.name,
-    command
-  );
-
 }
 
+loadCommands(commandsPath);
+
 client.once("ready", () => {
-
-  console.log(
-    `Logged in as ${client.user.tag}`
-  );
-
+  console.log(`Logged in as ${client.user.tag}`);
 });
 
 client.on("messageCreate", async (message) => {
@@ -82,53 +77,26 @@ client.on("messageCreate", async (message) => {
     .trim()
     .split(/ +/);
 
-  const commandName =
-    args.shift().toLowerCase();
+  const commandName = args.shift().toLowerCase();
 
-  const command =
-    client.commands.get(commandName);
+  const command = client.commands.get(commandName);
 
   if (!command) {
-
-    return message.reply(
-      "Command does not exist."
-    );
-
+    return message.reply("Command does not exist.");
   }
 
-  const allowedUsers =
-    process.env.ALLOWED_USERS
-      .split(",");
+  const allowedUsers = process.env.ALLOWED_USERS.split(",");
 
-  if (
-    !allowedUsers.includes(
-      message.author.id
-    )
-  ) {
-
-    return message.reply(
-      "No permission to use this command."
-    );
-
+  if (!allowedUsers.includes(message.author.id)) {
+    return message.reply("No permission to use this command.");
   }
 
   try {
-
-    await command.execute(
-      message,
-      args
-    );
-
+    await command.execute(message, args);
   } catch (error) {
-
     console.error(error);
-
-    message.reply(
-      "Command execution failed."
-    );
-
+    message.reply("Command execution failed.");
   }
-
 });
 
 client.login(process.env.TOKEN);

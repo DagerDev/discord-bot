@@ -1,5 +1,5 @@
 module.exports = {
-  name: "line",
+  name: "high",
 
   async execute(message, args) {
 
@@ -19,7 +19,7 @@ module.exports = {
     if (!args.length) {
 
       return message.channel.send(
-        "Usage: !line <number>"
+        "Usage: !high <number>"
       );
 
     }
@@ -46,43 +46,10 @@ module.exports = {
 
     }
 
-    const start =
-      Math.max(0, target - 6);
-
-    const end =
-      Math.min(
-        view.rawLines.length,
-        target + 5
-      );
-
-    const output = [];
-
-    for (
-      let i = start;
-      i < end;
-      i++
-    ) {
-
-      const lineNumber = i + 1;
-
-      let line =
-        view.rawLines[i];
-
-      if (lineNumber === target) {
-
-        line =
-          `>>> ${line}`;
-
-      }
-
-      output.push(line);
-
-    }
+    view.highlight = target;
 
     return message.channel.send(
-      "```txt\n" +
-      output.join("\n") +
-      "\n```"
+      `Highlighted line ${target}`
     );
 
   }
