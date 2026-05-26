@@ -11,47 +11,120 @@ function headers() {
   };
 }
 
+function createPages(text, linesPerPage = 25) {
+
+  const lines = text.split("\n");
+
+  const numbered = lines.map(
+    (line, i) => `${i + 1} | ${line}`
+  );
+
+  const pages = [];
+
+  for (
+    let i = 0;
+    i < numbered.length;
+    i += linesPerPage
+  ) {
+
+    pages.push(
+      numbered
+        .slice(i, i + linesPerPage)
+        .join("\n")
+    );
+
+  }
+
+  return pages;
+}
+
 module.exports = {
   name: "search",
-  description: "Search files in the GitHub repository",
+  description: "Search files in repository",
 
   async execute(message, args) {
-    const keyword = args.join(" ").toLowerCase();
 
-    if (!keyword) {
-      return message.channel.send("Usage: !git search <keyword>");
-    }
+    if (!args.length) {
 
-    try {
-      // Get full repo file tree
-      const res = await axios.get(
-        `https://api.github.com/repos/${username}/${repo}/git/trees/main?recursive=1`,
-        { headers: headers() }
+      return message.channel.send(
+        "Usage: !git search <keyword>"
       );
 
-      const tree = res.data.tree || [];
+    }
 
-      const matches = tree
-        .filter(item =>
-          item.path.toLowerCase().includes(keyword)
-        )
-        .slice(0, 15);
+    const keyword =
+      args.join(" ").toLowerCase();
 
-      if (matches.length === 0) {
-        return message.channel.send("No matches found.");
+    try {
+
+      const res = await axios.get(
+        `https://api.github.com/repos/${username}/${repo}/git/trees/main?recursive=1`,
+        {
+          headers: headers()
+        }
+      );
+
+      const tree =
+        res.data.tree || [];
+
+      const matches = tree.filter(item =>
+        item.path
+          .toLowerCase()
+          .includes(keyword)
+      );
+
+      if (!matches.length) {
+
+        return message.channel.send(
+          "No matching files found."
+        );
+
       }
 
-      let output = `GIT SEARCH: "${keyword}"\n\n`;
+      let output =
+        `SEARCH RESULTS FOR "${keyword}"\n\n`;
 
-      for (const item of matches) {
-        output += `${item.type.toUpperCase()} ${item.path}\n`;
-      }
+      matches.forEach(item => {
 
-      message.channel.send("```\n" + output + "\n```");
+        const type =
+          item.type === "tree"
+            ? "[DIR]"
+            : "[FILE]";
+
+        output +=
+          `${type} ${item.path}\n`;
+
+      });
+
+      const pages =
+        createPages(output);
+
+      message.client.views.set(
+        message.author.id,
+        {
+          pages,
+          page: 0
+        }
+      );
+
+      return message.channel.send(
+        "```txt\n" +
+        `PAGE: 1/${pages.length}\n\n` +
+        pages[0] +
+        "\n```"
+      );
 
     } catch (err) {
-      console.error(err);
-      message.channel.send("Git search failed.");
+
+      console.error(
+        err.response?.data || err
+      );
+
+      return message.channel.send(
+        "Failed to search repository."
+      );
+
     }
+
   }
 };
