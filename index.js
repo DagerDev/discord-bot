@@ -23,33 +23,25 @@ client.views = new Map();
 const commandsPath = path.join(__dirname, "commands");
 
 function loadCommands(dir) {
-
   const entries = fs.readdirSync(dir);
 
   for (const entry of entries) {
-
     const fullPath = path.join(dir, entry);
-
     const stat = fs.lstatSync(fullPath);
 
     if (stat.isDirectory()) {
-
       loadCommands(fullPath);
+      continue;
+    }
 
-    } else if (entry.endsWith(".js")) {
+    if (!entry.endsWith(".js")) continue;
 
-      delete require.cache[require.resolve(fullPath)];
+    delete require.cache[require.resolve(fullPath)];
 
-      const command = require(fullPath);
+    const command = require(fullPath);
 
-      if (
-        command?.name &&
-        typeof command.execute === "function"
-      ) {
-        client.commands.set(command.name, command);
-      } else {
-        console.log(`Invalid command file: ${entry}`);
-      }
+    if (command?.name && typeof command.execute === "function") {
+      client.commands.set(command.name, command);
     }
   }
 }
@@ -61,7 +53,6 @@ client.once("ready", () => {
 });
 
 client.on("messageCreate", async (message) => {
-
   if (message.author.bot) return;
 
   const prefixes = ["!", "¿"];
