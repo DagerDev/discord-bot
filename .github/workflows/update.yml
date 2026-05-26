@@ -1,4 +1,4 @@
-name: Remote Update
+name: Deploy
 
 on:
   repository_dispatch:
@@ -9,16 +9,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      - name: Install dependencies
+      - name: Install
         run: npm install
 
-      - name: Run bot (test step)
-        run: echo "Build successful"
+      - name: Run bot
+        run: node index.js
