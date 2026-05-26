@@ -29,7 +29,7 @@ module.exports = {
       );
 
       message.reply(
-        "🚀 Update triggered."
+        "🚀 Deploy triggered."
       );
 
     } catch (error) {
@@ -37,7 +37,7 @@ module.exports = {
       console.error(error);
 
       message.reply(
-        "❌ Update failed."
+        "❌ Deploy failed."
       );
 
     }
