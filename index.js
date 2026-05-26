@@ -18,6 +18,7 @@ const client = new Client({
 });
 
 client.commands = new Collection();
+client.exportSession = null;
 
 // Load commands
 const commandsPath = path.join(__dirname, "commands");
@@ -46,47 +47,36 @@ client.once("ready", () => {
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
-  /* -------------------------
-     EXPORT CONFIRMATION SYSTEM
-  -------------------------- */
+  // -------------------------
+  // EXPORT CONFIRMATION SYSTEM
+  // -------------------------
   const session = client.exportSession;
 
   if (session) {
-    // only allow the same user to respond
     if (message.author.id === session.userId) {
-      
       if (message.content === "!y") {
         clearTimeout(session.timeout);
-
         message.channel.send("Export confirmed. Running...");
-
         client.exportSession = null;
-
-        // TODO: run your export logic here
         return;
       }
 
       if (message.content === "!n") {
         clearTimeout(session.timeout);
-
         message.channel.send("Export cancelled.");
-
         client.exportSession = null;
-
         return;
       }
     }
 
-    // block others from interfering silently
     if (message.content === "!y" || message.content === "!n") {
       return;
     }
   }
 
-  /* -------------------------
-     PREFIX SYSTEM
-  -------------------------- */
-
+  // -------------------------
+  // PREFIX SYSTEM
+  // -------------------------
   const prefixes = ["!", "¿"];
 
   const usedPrefix = prefixes.find(p =>
@@ -112,34 +102,34 @@ client.on("messageCreate", async (message) => {
     return message.reply("Unknown command.");
   }
 
-  /* -------------------------
-     USER PERMISSION CHECK
-  -------------------------- */
-
+  // -------------------------
+  // USER PERMISSION CHECK
+  // -------------------------
   const allowedUsers = new Set(
     (process.env.ALLOWED_USERS || "")
       .split(",")
       .filter(Boolean)
   );
 
-  if (allowedUsers.size > 0 && !allowedUsers.has(message.author.id)) {
+  if (
+    allowedUsers.size > 0 &&
+    !allowedUsers.has(message.author.id)
+  ) {
     return message.reply("No permission to use this command.");
   }
 
-  /* -------------------------
-     CHANNEL RESTRICTION (OPTIONAL)
-  -------------------------- */
-
+  // -------------------------
+  // CHANNEL RESTRICTION (OPTIONAL)
+  // -------------------------
   if (command.allowedChannelId) {
     if (message.channel.id !== command.allowedChannelId) {
       return message.reply("This command cannot be used in this channel.");
     }
   }
 
-  /* -------------------------
-     EXECUTE COMMAND
-  -------------------------- */
-
+  // -------------------------
+  // EXECUTE COMMAND
+  // -------------------------
   try {
     await command.execute(message, args);
   } catch (error) {
