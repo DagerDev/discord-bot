@@ -12,10 +12,9 @@ function headers() {
 }
 
 function createPages(text, linesPerPage = 25) {
+  const rawLines = text.split("\n");
 
-  const lines = text.split("\n");
-
-  const numbered = lines.map(
+  const numbered = rawLines.map(
     (line, i) => `${i + 1} | ${line}`
   );
 
@@ -26,16 +25,17 @@ function createPages(text, linesPerPage = 25) {
     i < numbered.length;
     i += linesPerPage
   ) {
-
     pages.push(
       numbered
         .slice(i, i + linesPerPage)
         .join("\n")
     );
-
   }
 
-  return pages;
+  return {
+    pages,
+    rawLines: numbered
+  };
 }
 
 module.exports = {
@@ -45,11 +45,9 @@ module.exports = {
   async execute(message, args) {
 
     if (!args.length) {
-
       return message.channel.send(
         "Usage: !git search <keyword>"
       );
-
     }
 
     const keyword =
@@ -67,22 +65,26 @@ module.exports = {
       const tree =
         res.data.tree || [];
 
-      const matches = tree.filter(item =>
-        item.path
-          .toLowerCase()
-          .includes(keyword)
-      );
+      const matches =
+        tree.filter(item =>
+          item.path
+            .toLowerCase()
+            .includes(keyword)
+        );
 
       if (!matches.length) {
-
         return message.channel.send(
           "No matching files found."
         );
-
       }
 
-      let output =
-        `SEARCH RESULTS FOR "${keyword}"\n\n`;
+      const outputLines = [];
+
+      outputLines.push(
+        `SEARCH RESULTS FOR "${keyword}"`
+      );
+
+      outputLines.push("");
 
       matches.forEach(item => {
 
@@ -91,25 +93,32 @@ module.exports = {
             ? "[DIR]"
             : "[FILE]";
 
-        output +=
-          `${type} ${item.path}\n`;
+        outputLines.push(
+          `${type} ${item.path}`
+        );
 
       });
 
-      const pages =
-        createPages(output);
+      const text =
+        outputLines.join("\n");
+
+      const {
+        pages,
+        rawLines
+      } = createPages(text);
 
       message.client.views.set(
         message.author.id,
         {
           pages,
-          page: 0
+          page: 0,
+          rawLines,
+          mode: "search"
         }
       );
 
       return message.channel.send(
         "```txt\n" +
-        `PAGE: 1/${pages.length}\n\n` +
         pages[0] +
         "\n```"
       );

@@ -11,6 +11,25 @@ function headers() {
   };
 }
 
+function formatSize(bytes) {
+
+  if (bytes >= 1024 * 1024) {
+    return (
+      (bytes / (1024 * 1024)).toFixed(2) +
+      " MB"
+    );
+  }
+
+  if (bytes >= 1024) {
+    return (
+      (bytes / 1024).toFixed(2) +
+      " KB"
+    );
+  }
+
+  return bytes + " B";
+}
+
 function createPages(text, linesPerPage = 25) {
 
   const rawLines = text.split("\n");
@@ -42,8 +61,8 @@ function createPages(text, linesPerPage = 25) {
 }
 
 module.exports = {
-  name: "tree",
-  description: "Shows repository tree",
+  name: "size",
+  description: "Shows largest repository files",
 
   async execute(message) {
 
@@ -59,31 +78,24 @@ module.exports = {
       const tree =
         res.data.tree || [];
 
-      if (!tree.length) {
-
-        return message.channel.send(
-          "Repository tree is empty."
-        );
-
-      }
+      const files =
+        tree
+          .filter(item => item.type === "blob")
+          .sort((a, b) => b.size - a.size)
+          .slice(0, 50);
 
       const outputLines = [];
 
       outputLines.push(
-        "REPOSITORY TREE"
+        "LARGEST FILES"
       );
 
       outputLines.push("");
 
-      tree.forEach(item => {
-
-        const type =
-          item.type === "tree"
-            ? "[DIR]"
-            : "[FILE]";
+      files.forEach(file => {
 
         outputLines.push(
-          `${type} ${item.path}`
+          `${formatSize(file.size)} | ${file.path}`
         );
 
       });
@@ -102,7 +114,7 @@ module.exports = {
           pages,
           page: 0,
           rawLines,
-          mode: "tree"
+          mode: "size"
         }
       );
 
@@ -119,7 +131,7 @@ module.exports = {
       );
 
       return message.channel.send(
-        "Failed to fetch repository tree."
+        "Failed to fetch repository sizes."
       );
 
     }

@@ -13,15 +13,19 @@ function headers() {
 
 function createPages(text, linesPerPage = 20) {
 
-  const lines = text.split("\n");
+  const rawLines = text.split("\n");
 
-  const numbered = lines.map(
+  const numbered = rawLines.map(
     (line, i) => `${i + 1} | ${line}`
   );
 
   const pages = [];
 
-  for (let i = 0; i < numbered.length; i += linesPerPage) {
+  for (
+    let i = 0;
+    i < numbered.length;
+    i += linesPerPage
+  ) {
 
     pages.push(
       numbered
@@ -31,7 +35,10 @@ function createPages(text, linesPerPage = 20) {
 
   }
 
-  return pages;
+  return {
+    pages,
+    rawLines: numbered
+  };
 }
 
 module.exports = {
@@ -73,21 +80,24 @@ module.exports = {
           "base64"
         ).toString("utf-8");
 
-      const pages =
-        createPages(decoded);
+      const {
+        pages,
+        rawLines
+      } = createPages(decoded);
 
       message.client.views.set(
         message.author.id,
         {
           pages,
-          page: 0
+          page: 0,
+          rawLines,
+          mode: "open"
         }
       );
 
       return message.channel.send(
         "```js\n" +
-        `FILE: ${filePath}\n` +
-        `PAGE: 1/${pages.length}\n\n` +
+        `FILE: ${filePath}\n\n` +
         pages[0] +
         "\n```"
       );

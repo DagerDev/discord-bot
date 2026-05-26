@@ -1,6 +1,5 @@
 module.exports = {
-  name: "up",
-  description: "Scroll up",
+  name: "next",
 
   async execute(message) {
 
@@ -15,17 +14,19 @@ module.exports = {
       );
     }
 
-    if (view.page <= 0) {
+    if (
+      view.page >=
+      view.pages.length - 1
+    ) {
       return message.channel.send(
-        "Already at top."
+        "Already at bottom."
       );
     }
 
-    view.page--;
+    view.page++;
 
     return message.channel.send(
-      "```js\n" +
-      `PAGE ${view.page + 1}/${view.pages.length}\n\n` +
+      "```txt\n" +
       view.pages[view.page] +
       "\n```"
     );
