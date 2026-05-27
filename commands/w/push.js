@@ -12,8 +12,6 @@ module.exports = {
   async execute(message) {
 
     const source = path.join(process.cwd(), "story.gd");
-    const targetDir = path.join(process.cwd(), "scripts");
-    const target = path.join(targetDir, "story.gd");
 
     if (!fs.existsSync(source)) {
       return message.channel.send("story.gd not found.");
@@ -21,22 +19,21 @@ module.exports = {
 
     try {
 
-      fs.mkdirSync(targetDir, { recursive: true });
-      fs.copyFileSync(source, target);
-
       const git = simpleGit();
 
-      // ensure repo is correct
-      const remote = `https://${token}@github.com/${owner}/${repo}.git`;
+      const remoteUrl =
+        `https://${token}@github.com/${owner}/${repo}.git`;
 
       await git.add("./*");
 
       await git.commit("story update");
 
-      await git.push(remote, "main");
+      await git.push("origin", "main", {
+        "--repo": remoteUrl
+      });
 
       return message.channel.send(
-        "```txt\nPushed to GitHub successfully\n```"
+        "```txt\nPush successful\n```"
       );
 
     } catch (err) {
@@ -44,7 +41,7 @@ module.exports = {
       console.log(err);
 
       return message.channel.send(
-        "Push failed."
+        "Push failed (check repo/token/branch)."
       );
     }
   }

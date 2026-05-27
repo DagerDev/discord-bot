@@ -1,47 +1,37 @@
 function extractNodes(content) {
 
-  const start = content.indexOf("var nodes := {");
+  const startKey = "nodes :=";
+  const start = content.indexOf(startKey);
 
   if (start === -1) return null;
 
   const slice = content.slice(start);
 
-  // find matching closing brace
-  let depth = 0;
-  let endIndex = -1;
+  let open = 0;
+  let startObj = slice.indexOf("{");
 
-  for (let i = 0; i < slice.length; i++) {
+  if (startObj === -1) return null;
 
-    if (slice[i] === "{") depth++;
-    if (slice[i] === "}") depth--;
+  let obj = "";
 
-    if (depth === 0) {
-      endIndex = i;
-      break;
-    }
+  for (let i = startObj; i < slice.length; i++) {
+
+    const c = slice[i];
+    obj += c;
+
+    if (c === "{") open++;
+    if (c === "}") open--;
+
+    if (open === 0) break;
   }
 
-  if (endIndex === -1) return null;
-
-  let raw = slice.slice(14, endIndex + 1); // inside { }
-
   try {
-
-    // convert GDScript → JS-safe format
-    raw = raw
-      .replace(/(\w+)\s*:/g, '"$1":')   // keys
-      .replace(/'/g, '"');             // quotes
-
-    return JSON.parse(raw);
-
+    // SAFE: return raw object text (not JSON parsed)
+    return eval("(" + obj + ")");
   } catch (e) {
-
-    console.log("Parse error:", e);
-
+    console.log(e);
     return null;
   }
 }
 
-module.exports = {
-  extractNodes
-};
+module.exports = { extractNodes };
