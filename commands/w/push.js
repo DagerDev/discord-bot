@@ -1,6 +1,5 @@
 const fs = require("fs");
-const path = require("path");
-const simpleGit = require("simple-git");
+const axios = require("axios");
 
 const owner = process.env.GITHUB_USERNAME;
 const repo = process.env.GITHUB_REPO;
@@ -11,37 +10,82 @@ module.exports = {
 
   async execute(message) {
 
-    const source = path.join(process.cwd(), "story.gd");
-
-    if (!fs.existsSync(source)) {
-      return message.channel.send("story.gd not found.");
-    }
-
     try {
 
-      const git = simpleGit();
+      if (!fs.existsSync("story.gd")) {
+        return message.channel.send(
+          "story.gd not found."
+        );
+      }
 
-      const remoteUrl =
-        `https://${token}@github.com/${owner}/${repo}.git`;
+      const content =
+        fs.readFileSync(
+          "story.gd",
+          "utf8"
+        );
 
-      await git.add("./*");
+      const encoded =
+        Buffer
+          .from(content)
+          .toString("base64");
 
-      await git.commit("story update");
+      const path =
+        "scripts/story.gd";
 
-      await git.push("origin", "main", {
-        "--repo": remoteUrl
-      });
+      let sha = null;
+
+      // check if file exists
+      try {
+
+        const existing =
+          await axios.get(
+            `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
+            {
+              headers: {
+                Authorization:
+                  `Bearer ${token}`,
+                "User-Agent":
+                  "discord-bot"
+              }
+            }
+          );
+
+        sha = existing.data.sha;
+
+      } catch {}
+
+      // upload/update
+      await axios.put(
+        `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
+        {
+          message: "story update",
+          content: encoded,
+          sha
+        },
+        {
+          headers: {
+            Authorization:
+              `Bearer ${token}`,
+            "User-Agent":
+              "discord-bot"
+          }
+        }
+      );
 
       return message.channel.send(
-        "```txt\nPush successful\n```"
+        "```txt\n" +
+        "story.gd pushed to game-jamm/scripts/" +
+        "\n```"
       );
 
     } catch (err) {
 
-      console.log(err);
+      console.log(
+        err.response?.data || err
+      );
 
       return message.channel.send(
-        "Push failed (check repo/token/branch)."
+        "Push failed."
       );
     }
   }
