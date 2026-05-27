@@ -1,128 +1,31 @@
-const axios = require("axios");
+// commands/git/tree.js
 
-const username = process.env.GITHUB_USERNAME;
-const repo = process.env.GITHUB_REPO;
-const token = process.env.GITHUB_TOKEN;
-
-function headers() {
-  return {
-    Authorization: `Bearer ${token}`,
-    "User-Agent": "discord-bot"
-  };
-}
-
-function createPages(text, linesPerPage = 25) {
-
-  const rawLines = text.split("\n");
-
-  const numbered = rawLines.map(
-    (line, i) => `${i + 1} | ${line}`
-  );
-
-  const pages = [];
-
-  for (
-    let i = 0;
-    i < numbered.length;
-    i += linesPerPage
-  ) {
-
-    pages.push(
-      numbered
-        .slice(i, i + linesPerPage)
-        .join("\n")
-    );
-
-  }
-
-  return {
-    pages,
-    rawLines: numbered
-  };
-}
+const { getTree } = require("@utils/github");
+const { setView } = require("@utils/session");
+const { renderPage } = require("@utils/fileView");
 
 module.exports = {
   name: "tree",
-  description: "Shows repository tree",
 
   async execute(message) {
 
-    try {
+    const tree = await getTree();
 
-      const res = await axios.get(
-        `https://api.github.com/repos/${username}/${repo}/git/trees/main?recursive=1`,
-        {
-          headers: headers()
-        }
-      );
+    const lines = tree.map((x, i) => ({
+      num: i + 1,
+      text: `[${x.type}] ${x.path}`
+    }));
 
-      const tree =
-        res.data.tree || [];
+    const view = {
+      file: "TREE",
+      rawLines: lines,
+      page: 0,
+      selected: null,
+      selectedLine: null
+    };
 
-      if (!tree.length) {
+    setView(message.client, message.author.id, view);
 
-        return message.channel.send(
-          "Repository tree is empty."
-        );
-
-      }
-
-      const outputLines = [];
-
-      outputLines.push(
-        "REPOSITORY TREE"
-      );
-
-      outputLines.push("");
-
-      tree.forEach(item => {
-
-        const type =
-          item.type === "tree"
-            ? "[DIR]"
-            : "[FILE]";
-
-        outputLines.push(
-          `${type} ${item.path}`
-        );
-
-      });
-
-      const text =
-        outputLines.join("\n");
-
-      const {
-        pages,
-        rawLines
-      } = createPages(text);
-
-      message.client.views.set(
-        message.author.id,
-        {
-          pages,
-          page: 0,
-          rawLines,
-          mode: "tree"
-        }
-      );
-
-      return message.channel.send(
-        "```txt\n" +
-        pages[0] +
-        "\n```"
-      );
-
-    } catch (err) {
-
-      console.error(
-        err.response?.data || err
-      );
-
-      return message.channel.send(
-        "Failed to fetch repository tree."
-      );
-
-    }
-
+    return renderPage(message, view);
   }
 };

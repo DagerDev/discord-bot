@@ -1,138 +1,98 @@
-const fs = require("fs");
-const path = require("path");
-
 module.exports = {
   name: "help",
-  description: "Shows available commands",
+  category: "basic",
+  description: "Shows command list",
 
   async execute(message, args) {
 
-    const category =
-      (args[0] || "").toLowerCase();
+    const topic =
+      args[0]?.toLowerCase();
 
-    const basePath = __dirname;
+    if (topic === "git") {
 
-    // -----------------------------
-    // !help
-    // -----------------------------
-    if (!category) {
+      const lines = [
+        "GIT COMMANDS",
+        "",
+        "!git tree",
+        "!git search <text>",
+        "!git open <file>",
+        "!git get",
+        "!git info",
+        "",
+        "VIEWER",
+        "",
+        "!select <line>",
+        "!line <line>",
+        "!high <line>",
+        "!find <text>",
+        "",
+        "IMAGE",
+        "",
+        "!img <file>"
+      ];
 
       return message.channel.send(
-        "Available categories:\n- basic\n- git"
+        "```txt\n" +
+        lines.join("\n") +
+        "\n```"
       );
 
     }
 
-    // -----------------------------
-    // BASIC
-    // -----------------------------
-    if (category === "basic") {
+    if (topic === "writer") {
 
-      const files =
-        fs.readdirSync(basePath)
-          .filter(file =>
-            file.endsWith(".js") &&
-            file !== "git.js" &&
-            file !== "help.js"
-          );
-
-      let output =
-        "BASIC COMMANDS\n\n";
-
-      for (const file of files) {
-
-        try {
-
-          const cmd =
-            require(path.join(basePath, file));
-
-          output += `!${cmd.name}`;
-
-          if (cmd.description) {
-            output += ` - ${cmd.description}`;
-          }
-
-          output += "\n";
-
-        } catch (err) {
-
-          console.error(
-            `Failed loading ${file}`,
-            err
-          );
-
-        }
-
-      }
+      const lines = [
+        "WRITER COMMANDS",
+        "",
+        "!w up",
+        "Upload story.gd",
+        "",
+        "!w play",
+        "Start story test mode",
+        "",
+        "!w play <scene>",
+        "Start from scene",
+        "",
+        "!w c <number>",
+        "Choose option",
+        "",
+        "!w q",
+        "Quit play session",
+        "",
+        "!w push",
+        "Commit and push story.gd"
+      ];
 
       return message.channel.send(
-        "```\n" + output + "\n```"
+        "```txt\n" +
+        lines.join("\n") +
+        "\n```"
       );
 
     }
 
-    // -----------------------------
-    // GIT
-    // -----------------------------
-    if (category === "git") {
+    const lines = [
+      "BASIC COMMANDS",
+      "",
+      "!export",
+      "!find",
+      "!haccess",
+      "!help",
+      "!img",
+      "!info",
+      "!ping",
+      "!play",
+      "",
+      "TOPICS",
+      "",
+      "!help git",
+      "!help writer"
+    ];
 
-      const gitPath =
-        path.join(basePath, "git");
-
-      if (!fs.existsSync(gitPath)) {
-
-        return message.channel.send(
-          "Git folder not found."
-        );
-
-      }
-
-      const files =
-        fs.readdirSync(gitPath)
-          .filter(file =>
-            file.endsWith(".js")
-          );
-
-      let output =
-        "GIT COMMANDS\n\n";
-
-      for (const file of files) {
-
-        try {
-
-          const cmd =
-            require(path.join(gitPath, file));
-
-          output += `!git ${cmd.name}`;
-
-          if (cmd.description) {
-            output += ` - ${cmd.description}`;
-          }
-
-          output += "\n";
-
-        } catch (err) {
-
-          console.error(
-            `Failed loading git/${file}`,
-            err
-          );
-
-        }
-
-      }
-
-      return message.channel.send(
-        "```\n" + output + "\n```"
-      );
-
-    }
-
-    // -----------------------------
-    // INVALID
-    // -----------------------------
-    return message.channel.send(
-      "Unknown category."
+    await message.channel.send(
+      "```txt\n" +
+      lines.join("\n") +
+      "\n```"
     );
 
   }

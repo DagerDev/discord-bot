@@ -3,40 +3,85 @@ module.exports = {
   category: "basic",
   description: "Exports project data",
 
-  async execute(message, args) {
-    const client = message.client;
+  async execute(message) {
 
-    const allowedUsers = (process.env.ALLOWED_USERS || "")
-      .split(",")
-      .filter(Boolean);
+    const client =
+      message.client;
 
-    if (!allowedUsers.includes(message.author.id)) {
-      return message.channel.send("No permission to use this command.");
+    const allowedUsers =
+      (process.env.ALLOWED_USERS || "")
+        .split(",")
+        .filter(Boolean);
+
+    if (
+      !allowedUsers.includes(
+        message.author.id
+      )
+    ) {
+
+      return message.channel.send(
+        "No permission to use this command."
+      );
+
     }
 
     if (client.exportSession) {
+
       return message.channel.send(
-        "An export is already pending confirmation. Please wait."
+        "An export is already pending confirmation."
       );
+
     }
 
     const session = {
       userId: message.author.id,
       channelId: message.channel.id,
-      timeout: null
+      timeout: null,
+      createdAt: Date.now()
     };
 
-    client.exportSession = session;
+    client.exportSession =
+      session;
 
-    message.channel.send("Confirm export? type !y or !n (30s timeout)");
+    const lines = [
+      "EXPORT CONFIRMATION",
+      "",
+      "Project export requested.",
+      "",
+      "Type:",
+      "!y  - Confirm export",
+      "!n  - Cancel export",
+      "",
+      "Timeout: 30 seconds"
+    ];
 
-    session.timeout = setTimeout(() => {
-      if (!client.exportSession) return;
+    await message.channel.send(
+      "```txt\n" +
+      lines.join("\n") +
+      "\n```"
+    );
 
-      if (client.exportSession.userId === session.userId) {
-        message.channel.send("No response received. Export cancelled.");
-        client.exportSession = null;
-      }
-    }, 30000);
+    session.timeout =
+      setTimeout(() => {
+
+        if (
+          !client.exportSession
+        ) return;
+
+        if (
+          client.exportSession.userId ===
+          session.userId
+        ) {
+
+          message.channel.send(
+            "Export cancelled (timeout)."
+          );
+
+          client.exportSession = null;
+
+        }
+
+      }, 30000);
+
   }
 };

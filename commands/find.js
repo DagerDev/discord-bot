@@ -1,89 +1,45 @@
+const { getView, setView } = require("@utils/session");
+const { renderPage } = require("@utils/fileView");
+
 module.exports = {
   name: "find",
-  description: "Find text inside current viewer session",
 
   async execute(message, args) {
 
-    const view =
-      message.client.views.get(
-        message.author.id
-      );
+    const view = getView(message.client, message.author.id);
 
     if (!view) {
-
-      return message.channel.send(
-        "No active viewer session."
-      );
-
+      return message.channel.send("No active session.");
     }
 
-    if (!args.length) {
+    const query = args.join(" ").toLowerCase().trim();
 
-      return message.channel.send(
-        "Usage: !find <text>"
-      );
-
+    if (!query) {
+      return message.channel.send("Usage: !find <text>");
     }
 
-    const query =
-      args.join(" ").toLowerCase();
-
-    const matches = [];
-
-    view.rawLines.forEach(line => {
-
-      if (
-        line.toLowerCase().includes(query)
-      ) {
-
-        matches.push(line);
-
-      }
-
-    });
-
-    if (!matches.length) {
-
-      return message.channel.send(
-        "No matches found."
-      );
-
-    }
-
-    const output =
-      matches.join("\n");
-
-    const pages = [];
-    const split =
-      output.split("\n");
-
-    for (
-      let i = 0;
-      i < split.length;
-      i += 25
-    ) {
-
-      pages.push(
-        split
-          .slice(i, i + 25)
-          .join("\n")
-      );
-
-    }
-
-    message.client.views.set(
-      message.author.id,
-      {
-        pages,
-        page: 0,
-        rawLines: matches,
-        mode: "find"
-      }
+    const index = view.rawLines.findIndex(lineObj =>
+      lineObj.text.toLowerCase().includes(query)
     );
+
+    if (index === -1) {
+      return message.channel.send("Not found.");
+    }
+
+    const lineNumber = index + 1;
+
+    view.page = Math.floor(index / 20);
+    view.selectedLine = lineNumber;
+
+    setView(message.client, message.author.id, view);
+
+    await renderPage(message, view);
 
     return message.channel.send(
       "```txt\n" +
-      pages[0] +
+      "FOUND MATCH\n\n" +
+      `Line: ${lineNumber}\n` +
+      `Text: ${view.rawLines[index].text}` +
       "\n```"
     );
 

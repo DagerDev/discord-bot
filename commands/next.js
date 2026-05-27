@@ -1,46 +1,12 @@
-function renderPage(view) {
+const {
+  renderPage,
+  getTotalPages
+} = require("@utils/fileView")
 
-  const linesPerPage = 25;
-
-  const start =
-    view.page * linesPerPage;
-
-  const end =
-    start + linesPerPage;
-
-  const lines =
-    view.rawLines.slice(start, end);
-
-  const output = [];
-
-  for (
-    let i = 0;
-    i < lines.length;
-    i++
-  ) {
-
-    const actualLine =
-      start + i + 1;
-
-    let line = lines[i];
-
-    if (
-      view.highlight &&
-      actualLine === view.highlight
-    ) {
-
-      line =
-        `>>> ${line}`;
-
-    }
-
-    output.push(line);
-
-  }
-
-  return output.join("\n");
-
-}
+const {
+  getView,
+  setView
+} = require("@utils/session")
 
 module.exports = {
   name: "next",
@@ -48,7 +14,8 @@ module.exports = {
   async execute(message) {
 
     const view =
-      message.client.views.get(
+      getView(
+        message.client,
         message.author.id
       );
 
@@ -60,30 +27,29 @@ module.exports = {
 
     }
 
-    const linesPerPage = 25;
-
-    const maxPages =
-      Math.ceil(
-        view.rawLines.length /
-        linesPerPage
+    const totalPages =
+      getTotalPages(
+        view.rawLines
       );
 
     if (
-      view.page >= maxPages - 1
+      view.page <
+      totalPages - 1
     ) {
 
-      return message.channel.send(
-        "Already at bottom."
-      );
+      view.page++;
 
     }
 
-    view.page++;
+    setView(
+      message.client,
+      message.author.id,
+      view
+    );
 
-    return message.channel.send(
-      "```txt\n" +
-      renderPage(view) +
-      "\n```"
+    await renderPage(
+      message,
+      view
     );
 
   }

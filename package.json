@@ -1,20 +1,28 @@
 {
+  "name": "export-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+
+  "_moduleAliases": {
+    "@utils": "utils"
+  },
+
+  "scripts": {
+    "test": "node index.js"
+  },
+
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "axios": "^1.16.1",
     "discord.js": "^14.26.4",
     "dotenv": "^17.4.2",
+    "module-alias": "^2.3.4",
     "simple-git": "^3.36.0"
-  },
-  "name": "export-bot",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "node index.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs"
+  }
 }

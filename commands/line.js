@@ -1,89 +1,32 @@
+const { getView, setView } = require("@utils/session")
+const { renderPage } = require("@utils/fileView")
+
 module.exports = {
   name: "line",
 
   async execute(message, args) {
 
-    const view =
-      message.client.views.get(
-        message.author.id
-      );
+    const view = getView(message.client, message.author.id);
 
     if (!view) {
-
-      return message.channel.send(
-        "No active viewer session."
-      );
-
+      return message.channel.send("No active session.");
     }
 
-    if (!args.length) {
+    const line = parseInt(args[0]);
 
-      return message.channel.send(
-        "Usage: !line <number>"
-      );
-
+    if (isNaN(line)) {
+      return message.channel.send("Usage: !line <number>");
     }
 
-    const target =
-      parseInt(args[0]);
-
-    if (isNaN(target)) {
-
-      return message.channel.send(
-        "Invalid line number."
-      );
-
+    if (!view.rawLines[line - 1]) {
+      return message.channel.send("Invalid line.");
     }
 
-    if (
-      target < 1 ||
-      target > view.rawLines.length
-    ) {
+    view.page = Math.floor((line - 1) / 20);
+    view.selectedLine = line;
 
-      return message.channel.send(
-        "Line does not exist."
-      );
+    setView(message.client, message.author.id, view);
 
-    }
-
-    const start =
-      Math.max(0, target - 6);
-
-    const end =
-      Math.min(
-        view.rawLines.length,
-        target + 5
-      );
-
-    const output = [];
-
-    for (
-      let i = start;
-      i < end;
-      i++
-    ) {
-
-      const lineNumber = i + 1;
-
-      let line =
-        view.rawLines[i];
-
-      if (lineNumber === target) {
-
-        line =
-          `>>> ${line}`;
-
-      }
-
-      output.push(line);
-
-    }
-
-    return message.channel.send(
-      "```txt\n" +
-      output.join("\n") +
-      "\n```"
-    );
-
+    return renderPage(message, view);
   }
 };
